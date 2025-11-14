@@ -1,0 +1,19 @@
+{
+  "name": "filtrar-e-gerar-relatorio",
+  "label": "Filtrar e Gerar Relatório",
+  "type": "widget",
+  "version": "1.19.0",
+  "exbVersion": "1.18.0",
+  "author": "Esri R&D Center Beijing",
+  "description": "Widget que carrega automaticamente a camada de alertas regional lapa, permite filtrar e dar zoom em polígonos pela coluna idea, e gera relatórios HTML usando geoprocessamento.",
+  "copyright": "",
+  "license": "http://www.apache.org/licenses/LICENSE-2.0",
+  "properties": {},
+  "translatedLocales": [
+    "en"
+  ],
+  "defaultSize": {
+    "width": 400,
+    "height": 250
+  }
+}
