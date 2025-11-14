@@ -1,15 +1,16 @@
-# Filtrar e Baixar
+# Filtrar e Gerar Relatório
 
-Este widget carrega automaticamente a camada de Feature Service de alertas regional lapa e permite pesquisar, filtrar e dar zoom em polígonos específicos através da coluna "idea".
+Este widget carrega automaticamente a camada de Feature Service de alertas regional lapa, permite pesquisar, filtrar e dar zoom em polígonos específicos através da coluna "idea", e gera relatórios HTML usando geoprocessamento.
 
 ## Como usar
 
 1. Adicione o widget à sua experiência no Experience Builder
 2. Configure o widget para usar um widget de mapa
 3. A camada será carregada automaticamente quando o mapa estiver disponível
-4. Digite um número na coluna "idea" no campo de pesquisa
-5. Clique em "Filtrar e Zoom" para aplicar o filtro e dar zoom no polígono correspondente
-6. Use o botão "Limpar Filtro" para remover o filtro e visualizar todos os polígonos novamente
+4. Digite um número IDEA no campo de pesquisa (formato: XXX.X.XXXXXX/YYYY)
+5. Clique em "Filtrar" para aplicar o filtro e dar zoom no polígono correspondente
+6. Clique em "Gerar Relatório" para gerar um relatório HTML usando geoprocessamento
+7. Use o botão "Limpar Filtro" para remover o filtro e visualizar todos os polígonos novamente
 
 ## Como funciona
 
@@ -53,6 +54,16 @@ layer.queryFeatures(query).then((results) => {
 })
 ```
 
+### Geração de relatórios
+
+O widget utiliza geoprocessamento para gerar relatórios HTML:
+- Valida o formato do número IDEA (XXX.X.XXXXXX/YYYY)
+- Envia o número IDEA para a ferramenta de geoprocessamento
+- Processa o resultado e exibe o relatório HTML em uma nova janela
+
+O widget utiliza a URL fixa do serviço de geoprocessamento:
+- `https://meioambiente.sistemas.mpba.mp.br/server/rest/services/testeoutput/processaralerta_idea/GPServer`
+
 ## Requisitos
 
 - Experience Builder 1.18.0 ou superior
@@ -67,18 +78,18 @@ layer.queryFeatures(query).then((results) => {
    ```powershell
    .\package-widget.ps1
    ```
-   Isso criará o arquivo `filtrar-e-baixar.zip`
+   Isso criará o arquivo `filtrar-e-gerar-relatorio.zip`
 
 2. **Faça upload no Portal:**
    - Acesse o Portal do Experience Builder como Administrador
    - Navegue até **Widgets** > **Custom Widgets**
    - Clique em **Add Widget** ou **Upload Widget**
-   - Selecione o arquivo `filtrar-e-baixar.zip`
+   - Selecione o arquivo `filtrar-e-gerar-relatorio.zip`
    - Aguarde o processamento e validação
 
 3. **Use o widget:**
    - No Experience Builder, vá em **Insert** > **Widget**
-   - Procure por "Filtrar e Baixar" na lista de widgets
+   - Procure por "Filtrar e Gerar Relatório" na lista de widgets
    - Arraste para a experiência
 
 ### Opção 2: Deploy via GitHub
@@ -87,13 +98,13 @@ layer.queryFeatures(query).then((results) => {
    - Acesse o Portal do Experience Builder como Administrador
    - Navegue até **Widgets** > **Custom Widgets**
    - Clique em **Add from GitHub** (se disponível)
-   - Informe a URL do repositório: `https://github.com/lorenalferraz/filtrar.git`
+   - Informe a URL do repositório: `https://github.com/lorenalferraz/filtrar-e-gerar-relatorio.git`
    - Selecione o branch (geralmente `main`)
    - O Portal irá baixar e compilar automaticamente
 
 2. **Usando GitHub Pages (URL alternativa):**
    - Após configurar GitHub Pages (veja `GITHUB_PAGES_SETUP.md`)
-   - Você pode usar a URL: `https://lorenalferraz.github.io/filtrar/manifest.json`
+   - Você pode usar a URL: `https://lorenalferraz.github.io/filtrar-e-gerar-relatorio/manifest.json`
    - Mas o Portal ainda precisará clonar o repositório completo para ter acesso a todos os arquivos
 
 3. **Validação:**
@@ -104,7 +115,7 @@ layer.queryFeatures(query).then((results) => {
 
 O widget deve conter os seguintes arquivos:
 ```
-filtrar-e-baixar/
+filtrar-e-gerar-relatorio/
 ├── manifest.json          # Metadados do widget (obrigatório)
 ├── config.json            # Configuração padrão
 ├── icon.svg               # Ícone do widget

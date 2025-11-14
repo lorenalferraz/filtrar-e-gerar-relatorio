@@ -1,7 +1,7 @@
 # Script para criar pacote ZIP do widget para Experience Builder Portal
 # Executa: .\package-widget.ps1
 
-$widgetName = "filtrar-e-baixar"
+$widgetName = "filtrar-e-gerar-relatorio"
 $zipFileName = "$widgetName.zip"
 $tempDir = "temp-package"
 
@@ -58,7 +58,7 @@ if (Test-Path $zipFileName) {
     Write-Host "3. Faca upload do arquivo: $zipFileName" -ForegroundColor White
     Write-Host ""
     Write-Host "Ou use a URL do GitHub:" -ForegroundColor Yellow
-    Write-Host "https://github.com/lorenalferraz/filtrar.git" -ForegroundColor Cyan
+    Write-Host "https://github.com/lorenalferraz/filtrar-e-gerar-relatorio.git" -ForegroundColor Cyan
 } else {
     Write-Host ""
     Write-Host "Erro ao criar o pacote ZIP!" -ForegroundColor Red
