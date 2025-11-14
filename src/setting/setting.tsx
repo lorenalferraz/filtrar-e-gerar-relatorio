@@ -49,7 +49,7 @@ any
 
   render () {
     const style = css`
-      .widget-setting-addLayers {
+      .widget-setting-filtrar-e-gerar-relatorio {
         .checkbox-row {
           display: flex;
           justify-content: space-between;
@@ -59,7 +59,7 @@ any
     `
     return (
       <div css={style}>
-        <div className="widget-setting-addLayers">
+        <div className="widget-setting-filtrar-e-gerar-relatorio">
           <SettingSection
             className="map-selector-section"
             title={this.props.intl.formatMessage({
@@ -87,7 +87,7 @@ any
             })}
           >
             <SettingRow>
-              <div className="w-100 addLayers">
+              <div className="w-100 filtrar-e-gerar-relatorio">
                 <div className="checkbox-row">
                   <label>
                     <FormattedMessage

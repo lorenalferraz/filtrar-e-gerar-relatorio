@@ -1166,7 +1166,7 @@ IState
       }
     `
     return (
-      <div className="widget-addLayers jimu-widget p-2" css={style}>
+      <div className="widget-filtrar-e-gerar-relatorio jimu-widget p-2" css={style}>
         {this.props.hasOwnProperty('useMapWidgetIds') &&
           this.props.useMapWidgetIds &&
           this.props.useMapWidgetIds.length === 1 && (
