@@ -32,7 +32,7 @@ npm run build:prod
 
 1. **Remova a pasta dist:**
    ```powershell
-   cd c:\exb\client\your-extensions\widgets\filtrar-e-baixar
+   cd c:\exb\client\your-extensions\widgets\filtrar-e-gerar-relatorio
    Remove-Item -Path dist -Recurse -Force
    ```
 

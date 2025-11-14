@@ -1,4 +1,4 @@
-# Guia de Deploy - Widget Filtrar e Baixar
+# Guia de Deploy - Widget Filtrar e Gerar Relatório
 
 ## ⚠️ IMPORTANTE: Por que a URL raw não funciona
 
@@ -26,7 +26,7 @@ Isso acontece porque:
      - **"Import from Repository"**
 
 2. **Informe os dados do repositório:**
-   - **URL do Repositório:** `https://github.com/lorenalferraz/filtrar.git`
+   - **URL do Repositório:** `https://github.com/lorenalferraz/filtrar-e-gerar-relatorio.git`
    - **Branch:** `main`
    - **Caminho do Widget:** (geralmente deixe em branco ou `/` se a raiz do repositório contém o widget)
 
@@ -43,17 +43,17 @@ Se o Portal não tiver suporte direto para GitHub, use o arquivo ZIP:
 
 1. **Gere o ZIP:**
    ```powershell
-   cd c:\exb\client\your-extensions\widgets\filtrar-e-baixar
+   cd c:\exb\client\your-extensions\widgets\filtrar-e-gerar-relatorio
    .\package-widget.ps1
    ```
    Ou manualmente:
    ```powershell
-   Compress-Archive -Path manifest.json,config.json,icon.svg,dist,src -DestinationPath filtrar-e-baixar.zip -Force
+   Compress-Archive -Path manifest.json,config.json,icon.svg,dist,src -DestinationPath filtrar-e-gerar-relatorio.zip -Force
    ```
 
 2. **Faça upload no Portal:**
    - Widgets > Custom Widgets > Upload Widget
-   - Selecione o arquivo `filtrar-e-baixar.zip`
+   - Selecione o arquivo `filtrar-e-gerar-relatorio.zip`
 
 ## 🔍 Verificações
 
@@ -73,7 +73,7 @@ repositório/
 ### Se o Portal perguntar por "Widget Path" ou "Widget Directory":
 
 - Se o widget está na **raiz do repositório**: deixe em branco ou `/`
-- Se o widget está em uma **subpasta**: informe o caminho, ex: `widgets/filtrar-e-baixar`
+- Se o widget está em uma **subpasta**: informe o caminho, ex: `widgets/filtrar-e-gerar-relatorio`
 
 ## 🐛 Troubleshooting
 
@@ -87,11 +87,11 @@ repositório/
 
 ### Erro: "Cannot access repository"
 - Verifique se o repositório é público (se não, configure credenciais no Portal)
-- Teste se consegue acessar: https://github.com/lorenalferraz/filtrar
+- Teste se consegue acessar: https://github.com/lorenalferraz/filtrar-e-gerar-relatorio
 
 ### Verificar se tudo está no GitHub:
 
-Acesse: https://github.com/lorenalferraz/filtrar/tree/main
+Acesse: https://github.com/lorenalferraz/filtrar-e-gerar-relatorio/tree/main
 
 Você deve ver:
 - ✅ manifest.json
@@ -109,7 +109,7 @@ Você deve ver:
 
 ## 🔗 Links Úteis
 
-- Repositório: https://github.com/lorenalferraz/filtrar
-- Manifest: https://raw.githubusercontent.com/lorenalferraz/filtrar/main/manifest.json
-- Branch Main: https://github.com/lorenalferraz/filtrar/tree/main
+- Repositório: https://github.com/lorenalferraz/filtrar-e-gerar-relatorio
+- Manifest: https://raw.githubusercontent.com/lorenalferraz/filtrar-e-gerar-relatorio/main/manifest.json
+- Branch Main: https://github.com/lorenalferraz/filtrar-e-gerar-relatorio/tree/main
 

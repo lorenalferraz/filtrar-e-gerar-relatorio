@@ -113,7 +113,7 @@ O campo `"name"` deve ser: `"filtrar-e-gerar-relatorio"`
 Os arquivos em `dist/runtime/widget.js` podem ter referências antigas. Verifique:
 
 ```powershell
-Select-String -Path "dist\**\*.js" -Pattern "filtrar-e-baixar"
+Select-String -Path "dist\**\*.js" -Pattern "filtrar-e-gerar-relatorio"
 ```
 
 Se encontrar referências, você precisa recompilar o widget.

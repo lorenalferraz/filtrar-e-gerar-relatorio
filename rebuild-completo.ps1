@@ -15,7 +15,7 @@ if (Test-Path "dist") {
 Write-Host "2. Limpando cache de build..." -ForegroundColor Yellow
 $cachePaths = @(
     "..\..\..\node_modules\.cache",
-    "..\..\..\dist\widgets\filtrar-e-baixar"
+    "..\..\..\dist\widgets\filtrar-e-gerar-relatorio"
 )
 
 foreach ($path in $cachePaths) {
@@ -40,7 +40,7 @@ Pop-Location
 
 # 4. Copiar arquivos compilados
 Write-Host "4. Copiando arquivos compilados..." -ForegroundColor Yellow
-$sourcePath = "..\..\..\dist\widgets\filtrar-e-baixar"
+$sourcePath = "..\..\..\dist\widgets\filtrar-e-gerar-relatorio"
 $destPath = "dist"
 
 if (Test-Path $sourcePath) {
@@ -65,7 +65,7 @@ if ($oldRefs) {
 
 # 6. Verificar se ha referencias ao novo widget
 Write-Host "6. Verificando referencias ao novo widget..." -ForegroundColor Yellow
-$newRefs = Select-String -Path "dist\**\*.js" -Pattern "filtrar-e-baixar" -ErrorAction SilentlyContinue
+$newRefs = Select-String -Path "dist\**\*.js" -Pattern "filtrar-e-gerar-relatorio" -ErrorAction SilentlyContinue
 if ($newRefs) {
     Write-Host "   ✓ Referencias ao novo widget encontradas" -ForegroundColor Green
 } else {

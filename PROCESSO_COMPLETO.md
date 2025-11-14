@@ -52,9 +52,9 @@ Ou use **Modo Anônimo/Privado** para testar sem cache.
 
 1. **Abra o Experience Builder**
 2. **Vá em Insert > Widget**
-3. **Procure por "Filtrar e Baixar"**
+3. **Procure por "Filtrar e Gerar Relatório"**
 4. **Verifique:**
-   - ✅ Nome: "Filtrar e Baixar"
+   - ✅ Nome: "Filtrar e Gerar Relatório"
    - ✅ Descrição: "Widget que carrega automaticamente a camada..."
    - ❌ NÃO deve mostrar "Add Layers"
 
@@ -63,13 +63,13 @@ Ou use **Modo Anônimo/Privado** para testar sem cache.
 ### Verificar se os arquivos estão corretos:
 
 ```powershell
-cd c:\exb\client\your-extensions\widgets\filtrar-e-baixar
+cd c:\exb\client\your-extensions\widgets\filtrar-e-gerar-relatorio
 
 # Não deve retornar nada
 Select-String -Path "dist\**\*.js" -Pattern "add-layers"
 
 # Deve retornar referências
-Select-String -Path "dist\**\*.js" -Pattern "filtrar-e-baixar"
+Select-String -Path "dist\**\*.js" -Pattern "filtrar-e-gerar-relatorio"
 ```
 
 ### Verificar o manifest.json:
@@ -78,12 +78,12 @@ Select-String -Path "dist\**\*.js" -Pattern "filtrar-e-baixar"
 Get-Content manifest.json | Select-String "name"
 ```
 
-Deve mostrar: `"name": "filtrar-e-baixar"`
+Deve mostrar: `"name": "filtrar-e-gerar-relatorio"`
 
 ### Rebuild completo (se necessário):
 
 ```powershell
-cd c:\exb\client\your-extensions\widgets\filtrar-e-baixar
+cd c:\exb\client\your-extensions\widgets\filtrar-e-gerar-relatorio
 .\rebuild-completo.ps1
 ```
 

@@ -18,12 +18,12 @@ O widget estava carregando a versão antiga "add-layers" porque os arquivos em `
    ```
 
 3. **Copiamos os arquivos compilados:**
-   - Os arquivos foram gerados em: `c:\exb\client\dist\widgets\filtrar-e-baixar\`
-   - Copiamos para: `c:\exb\client\your-extensions\widgets\filtrar-e-baixar\dist\`
+   - Os arquivos foram gerados em: `c:\exb\client\dist\widgets\filtrar-e-gerar-relatorio\`
+   - Copiamos para: `c:\exb\client\your-extensions\widgets\filtrar-e-gerar-relatorio\dist\`
 
 4. **Verificamos que não há mais referências ao widget antigo:**
    - ✅ Nenhuma referência a "add-layers" encontrada
-   - ✅ Referências corretas a "filtrar-e-baixar" presentes
+   - ✅ Referências corretas a "filtrar-e-gerar-relatorio" presentes
 
 5. **Fizemos commit e push:**
    ```powershell
@@ -41,7 +41,7 @@ Após recompilar, verifique:
 Select-String -Path "dist\**\*.js" -Pattern "add-layers"
 
 # Deve retornar referências ao novo widget
-Select-String -Path "dist\**\*.js" -Pattern "filtrar-e-baixar"
+Select-String -Path "dist\**\*.js" -Pattern "filtrar-e-gerar-relatorio"
 ```
 
 ## 📝 Próximos Passos
@@ -55,7 +55,7 @@ Select-String -Path "dist\**\*.js" -Pattern "filtrar-e-baixar"
    - Ou use modo anônimo
 
 3. **Verifique no Experience Builder:**
-   - O widget deve aparecer como "Filtrar e Baixar"
+   - O widget deve aparecer como "Filtrar e Gerar Relatório"
    - Não deve mais mostrar "Add Layers"
 
 ## ⚠️ Importante
@@ -68,6 +68,6 @@ npm run build:dev
 
 E copie os arquivos para a pasta do widget:
 ```powershell
-Copy-Item -Path "..\..\..\dist\widgets\filtrar-e-baixar\*" -Destination "dist" -Recurse -Force
+Copy-Item -Path "..\..\..\dist\widgets\filtrar-e-gerar-relatorio\*" -Destination "dist" -Recurse -Force
 ```
 
