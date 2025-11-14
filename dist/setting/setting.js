@@ -213,7 +213,7 @@ class Setting extends jimu_core__WEBPACK_IMPORTED_MODULE_0__.React.PureComponent
     }
     render() {
         const style = (0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.css) `
-      .widget-setting-addLayers {
+      .widget-setting-filtrar-e-gerar-relatorio {
         .checkbox-row {
           display: flex;
           justify-content: space-between;
@@ -222,7 +222,7 @@ class Setting extends jimu_core__WEBPACK_IMPORTED_MODULE_0__.React.PureComponent
       }
     `;
         return ((0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", { css: style },
-            (0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", { className: "widget-setting-addLayers" },
+            (0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", { className: "widget-setting-filtrar-e-gerar-relatorio" },
                 (0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)(jimu_ui_advanced_setting_components__WEBPACK_IMPORTED_MODULE_2__.SettingSection, { className: "map-selector-section", title: this.props.intl.formatMessage({
                         id: 'mapWidgetLabel',
                         defaultMessage: _translations_default__WEBPACK_IMPORTED_MODULE_3__["default"].selectMapWidget
@@ -234,7 +234,7 @@ class Setting extends jimu_core__WEBPACK_IMPORTED_MODULE_0__.React.PureComponent
                         defaultMessage: _translations_default__WEBPACK_IMPORTED_MODULE_3__["default"].settings
                     }) },
                     (0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)(jimu_ui_advanced_setting_components__WEBPACK_IMPORTED_MODULE_2__.SettingRow, null,
-                        (0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", { className: "w-100 addLayers" },
+                        (0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", { className: "w-100 filtrar-e-gerar-relatorio" },
                             (0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", { className: "checkbox-row" },
                                 (0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)("label", null,
                                     (0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)(jimu_core__WEBPACK_IMPORTED_MODULE_0__.FormattedMessage, { id: "zoomToLayer", defaultMessage: _translations_default__WEBPACK_IMPORTED_MODULE_3__["default"].zoomToLayer })),

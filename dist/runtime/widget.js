@@ -1225,7 +1225,7 @@ class Widget extends jimu_core__WEBPACK_IMPORTED_MODULE_0__.React.PureComponent 
         color: #0079c1;
       }
     `;
-        return ((0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", { className: "widget-addLayers jimu-widget p-2", css: style },
+        return ((0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)("div", { className: "widget-filtrar-e-gerar-relatorio jimu-widget p-2", css: style },
             this.props.hasOwnProperty('useMapWidgetIds') &&
                 this.props.useMapWidgetIds &&
                 this.props.useMapWidgetIds.length === 1 && ((0,jimu_core__WEBPACK_IMPORTED_MODULE_0__.jsx)(jimu_arcgis__WEBPACK_IMPORTED_MODULE_1__.JimuMapViewComponent, { useMapWidgetId: (_a = this.props.useMapWidgetIds) === null || _a === void 0 ? void 0 : _a[0], onActiveViewChange: (jmv) => {
