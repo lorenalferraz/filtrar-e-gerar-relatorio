@@ -562,68 +562,63 @@ IState
         }
       }
       
-      // Primeiro, vamos obter informações sobre a task específica para descobrir os parâmetros
-      // Tenta primeiro com a task relatorio_analise_lapa (que corresponde à URL fixa)
-      console.log('Obtendo informações da task específica...')
+      // Primeiro, vamos obter informações sobre a GP para descobrir os parâmetros
+      // Começa tentando da GP geral (mais confiável)
+      console.log('Obtendo informações da ferramenta de geoprocessamento...')
       
-      // Tenta primeiro com relatorio_analise_lapa (nome da task na URL fixa)
-      const taskNameFromUrl = 'relatorio_analise_lapa'
-      const taskNameEncoded = encodeURIComponent(taskNameFromUrl)
-      let infoUrl = addTokenToUrl(`${this.GP_SERVICE_URL}/${taskNameEncoded}?f=json`)
-      console.log('Tentando URL de informações da task (relatorio_analise_lapa):', infoUrl)
-      
-      // Se não funcionar, tenta com o nome original
-      const fallbackTaskName = this.GP_TASK_NAME
-      const fallbackTaskNameEncoded = encodeURIComponent(fallbackTaskName)
-      const fallbackInfoUrl = addTokenToUrl(`${this.GP_SERVICE_URL}/${fallbackTaskNameEncoded}?f=json`)
-      console.log('URL alternativa (fallback):', fallbackInfoUrl)
-      
-      // Tenta obter informações da task específica primeiro
       let gpInfo
       try {
-        let taskInfoResponse = await fetch(infoUrl)
-        if (!taskInfoResponse.ok) {
-          // Se falhar, tenta com o nome alternativo
-          console.warn(`Não foi possível obter informações da task ${taskNameFromUrl}, tentando com ${fallbackTaskName}...`)
-          taskInfoResponse = await fetch(fallbackInfoUrl)
+        // Tenta primeiro da GP geral
+        const gpInfoUrl = addTokenToUrl(`${this.GP_SERVICE_URL}?f=json`)
+        console.log('Tentando obter informações da GP geral:', gpInfoUrl)
+        const gpInfoResponse = await fetch(gpInfoUrl)
+        
+        if (!gpInfoResponse.ok) {
+          throw new Error(`Erro ao obter informações: ${gpInfoResponse.status} ${gpInfoResponse.statusText}`)
         }
         
-        if (taskInfoResponse.ok) {
-          gpInfo = await taskInfoResponse.json()
-          console.log('Informações da task específica obtidas com sucesso')
-          console.log('Informações completas da task:', JSON.stringify(gpInfo, null, 2))
-        } else {
-          // Se falhar, tenta da GP geral
-          console.warn('Não foi possível obter informações da task, tentando da GP geral...')
-          const gpInfoUrl = addTokenToUrl(`${this.GP_SERVICE_URL}?f=json`)
-          const gpInfoResponse = await fetch(gpInfoUrl)
+        gpInfo = await gpInfoResponse.json()
+        console.log('Informações da GP geral obtidas com sucesso')
+        console.log('Informações completas da GP:', JSON.stringify(gpInfo, null, 2))
+        
+        // Se a GP geral retornou tasks, tenta obter informações da task específica
+        if (gpInfo.tasks && Array.isArray(gpInfo.tasks) && gpInfo.tasks.length > 0) {
+          console.log('Tasks disponíveis na GP:', gpInfo.tasks.map(t => t.name))
           
-          if (!gpInfoResponse.ok) {
-            throw new Error(`Erro ao obter informações: ${taskInfoResponse.status} ${taskInfoResponse.statusText}`)
+          // Tenta encontrar a task que corresponde à URL fixa
+          const taskNameFromUrl = 'relatorio_analise_lapa'
+          const matchingTask = gpInfo.tasks.find(t => 
+            t.name === taskNameFromUrl || 
+            t.name === 'relatorio_analise_lapa' ||
+            t.name.includes('relatorio') || 
+            t.name.includes('analise') ||
+            t.name.includes('lapa')
+          )
+          
+          if (matchingTask) {
+            console.log('Task encontrada:', matchingTask.name)
+            // Tenta obter informações detalhadas da task
+            try {
+              const taskNameEncoded = encodeURIComponent(matchingTask.name)
+              const taskInfoUrl = addTokenToUrl(`${this.GP_SERVICE_URL}/${taskNameEncoded}?f=json`)
+              console.log('Tentando obter informações detalhadas da task:', taskInfoUrl)
+              const taskInfoResponse = await fetch(taskInfoUrl)
+              
+              if (taskInfoResponse.ok) {
+                const taskInfo = await taskInfoResponse.json()
+                if (taskInfo.parameters && Array.isArray(taskInfo.parameters)) {
+                  gpInfo = taskInfo
+                  console.log('Usando informações detalhadas da task específica')
+                }
+              }
+            } catch (taskError) {
+              console.warn('Não foi possível obter informações detalhadas da task, usando informações da GP geral:', taskError)
+            }
           }
-          
-          gpInfo = await gpInfoResponse.json()
-          console.log('Usando informações da GP geral')
-          console.log('Informações completas da GP:', JSON.stringify(gpInfo, null, 2))
         }
       } catch (infoError) {
-        // Se falhar, tenta da GP geral
-        console.warn('Erro ao obter informações da task, tentando da GP geral...', infoError)
-        try {
-          const gpInfoUrl = addTokenToUrl(`${this.GP_SERVICE_URL}?f=json`)
-          const gpInfoResponse = await fetch(gpInfoUrl)
-          
-          if (!gpInfoResponse.ok) {
-            throw new Error(`Erro ao obter informações da GP geral: ${gpInfoResponse.status} ${gpInfoResponse.statusText}`)
-          }
-          
-          gpInfo = await gpInfoResponse.json()
-          console.log('Usando informações da GP geral (fallback)')
-          console.log('Informações completas da GP:', JSON.stringify(gpInfo, null, 2))
-        } catch (fallbackError) {
-          console.error('Erro ao obter informações da GP geral:', fallbackError)
-          throw new Error(`Não foi possível acessar a ferramenta de geoprocessamento. Verifique se a URL está correta e acessível.`)
-        }
+        console.error('Erro ao obter informações da GP:', infoError)
+        throw new Error(`Não foi possível acessar a ferramenta de geoprocessamento. Verifique se a URL está correta e acessível.`)
       }
       
       // Verifica se gpInfo foi obtido corretamente
@@ -696,25 +691,41 @@ IState
         
         // Tenta usar a task específica diretamente se não conseguir obter parâmetros
         if (gpInfo.tasks && Array.isArray(gpInfo.tasks) && gpInfo.tasks.length > 0) {
-          console.warn('Tentando usar informações da primeira task disponível...')
-          const firstTask = gpInfo.tasks[0]
-          if (firstTask.parameters && Array.isArray(firstTask.parameters)) {
-            gpInfo.parameters = firstTask.parameters
-            // Tenta novamente com os parâmetros da task
-            const inputParams = gpInfo.parameters.filter(p => 
-              (p.direction === 'esriGPParameterDirectionInput' || p.direction === 'GPParameterDirectionInput') &&
-              p.name
-            )
-            if (inputParams.length > 0) {
-              paramInfo = inputParams[0]
-              paramName = paramInfo.name
-              console.log('Usando parâmetros da task:', paramName)
+          console.warn('Tentando usar informações das tasks disponíveis...')
+          
+          // Tenta todas as tasks até encontrar uma com parâmetros
+          for (const task of gpInfo.tasks) {
+            console.log('Verificando task:', task.name)
+            if (task.parameters && Array.isArray(task.parameters)) {
+              const inputParams = task.parameters.filter(p => 
+                (p.direction === 'esriGPParameterDirectionInput' || p.direction === 'GPParameterDirectionInput') &&
+                p.name
+              )
+              if (inputParams.length > 0) {
+                gpInfo.parameters = task.parameters
+                paramInfo = inputParams[0]
+                paramName = paramInfo.name
+                console.log('Usando parâmetros da task:', task.name, '- Parâmetro:', paramName)
+                break
+              }
             }
           }
         }
         
+        // Se ainda não encontrou parâmetros, tenta usar um nome padrão comum
         if (!paramName) {
-          throw new Error('Não foi possível obter informações dos parâmetros da ferramenta de geoprocessamento. Verifique se a ferramenta está configurada corretamente.')
+          console.warn('Não foi possível obter parâmetros da GP. Tentando usar nomes padrão...')
+          // Lista de nomes comuns de parâmetros para tentar
+          const commonParamNames = ['idea', 'IDEA', 'Idea', 'numero_idea', 'numeroIdea', 'NumeroIDEA', 'valor', 'input', 'Input']
+          
+          // Se temos a URL fixa do submitJob, podemos tentar usar diretamente
+          // Mas primeiro, vamos tentar obter informações da task específica pela URL
+          console.warn('Usando URL fixa do submitJob diretamente. Tentando descobrir parâmetro...')
+          
+          // Define um parâmetro padrão para tentar
+          paramName = 'idea' // Nome mais comum
+          paramInfo = { name: paramName, dataType: 'GPString' }
+          console.warn('Usando parâmetro padrão:', paramName)
         }
       }
       
@@ -817,23 +828,17 @@ IState
         return response
       }
       
-      // Verifica se a task é assíncrona para decidir qual endpoint usar
-      const isAsync = gpInfo.executionType === 'esriExecutionTypeAsynchronous'
+      // Sempre usa a URL fixa do submitJob (já que temos ela configurada)
+      // Não precisa verificar se é assíncrona, pois a URL fixa já aponta para submitJob
+      const isAsync = true
       console.log('=== TENTANDO EXECUTAR GP ===')
-      console.log('Tipo de execução:', gpInfo.executionType)
-      console.log('É assíncrona?', isAsync)
-      console.log('Tentando primeiro com task específica:', this.GP_TASK_NAME)
+      console.log('Usando URL fixa do submitJob')
       console.log('Parâmetro que será enviado:', paramName)
       console.log('Valor que será enviado:', ideaNumber)
       
-      // Se for assíncrona, usa submitJob; caso contrário, usa execute
-      if (isAsync) {
-        executeUrl = this.GP_SUBMIT_JOB_URL
-        console.log('Usando endpoint /submitJob (tarefa assíncrona):', executeUrl)
-      } else {
-        executeUrl = `${this.GP_SERVICE_URL}/${taskNameEncoded}/execute`
-        console.log('Usando endpoint /execute (tarefa síncrona):', executeUrl)
-      }
+      // Sempre usa a URL fixa do submitJob
+      executeUrl = this.GP_SUBMIT_JOB_URL
+      console.log('URL do submitJob:', executeUrl)
       
       let executeResponse = await makeExecuteRequest(executeUrl)
       
