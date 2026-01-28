@@ -75,7 +75,7 @@ IState
     })
   }
 
-  // Carrega a camada automaticamente quando o componente é montado ou o mapa está disponível
+  // Carrega a camada em memória (sem adicionar ao mapa) quando o mapa está disponível
   componentDidUpdate = (prevProps, prevState) => {
     if (this.state.jimuMapView && !this.state.featureLayer && !prevState.jimuMapView) {
       // Salva a visualização inicial quando o mapa é detectado pela primeira vez
@@ -91,7 +91,7 @@ IState
     }
   }
 
-  // Carrega a camada de feature service
+  // Busca a camada existente no mapa ou cria uma em memória para queries
   loadFeatureLayer = () => {
     if (!this.state.jimuMapView) {
       return
@@ -105,43 +105,111 @@ IState
     ]).then((modules) => {
       [this.FeatureLayer, this.SpatialReference] = modules
 
-      // Cria a camada com a URL fixa
-      const layer = new this.FeatureLayer({
-        url: this.FEATURE_SERVICE_URL
-      })
-
-      // Adiciona a camada ao mapa
-      this.state.jimuMapView.view.map.add(layer)
-
-      // Aguarda a camada ser criada
-      layer.on('layerview-create', () => {
-        // Salva a visualização inicial do mapa se ainda não foi salva
-        if (!this.state.initialExtent && this.state.jimuMapView && this.state.jimuMapView.view) {
-          const currentExtent = this.state.jimuMapView.view.extent
-          if (currentExtent) {
-            this.setState({
-              featureLayer: layer,
-              loading: false,
-              initialExtent: currentExtent.clone()
-            })
-          } else {
-            this.setState({
-              featureLayer: layer,
-              loading: false
-            })
-          }
-        } else {
+      // Salva a visualização inicial do mapa se ainda não foi salva
+      if (!this.state.initialExtent && this.state.jimuMapView && this.state.jimuMapView.view) {
+        const currentExtent = this.state.jimuMapView.view.extent
+        if (currentExtent) {
           this.setState({
-            featureLayer: layer,
-            loading: false
+            initialExtent: currentExtent.clone()
           })
         }
-      })
+      }
 
-      layer.on('layerview-create-error', () => {
-        console.error('Erro ao carregar a camada')
-        this.setState({ loading: false })
+      // Tenta encontrar a camada já existente no mapa
+      const map = this.state.jimuMapView.view.map
+      let foundLayer = null
+
+      // Função auxiliar para verificar se uma URL corresponde à camada de alertas
+      const matchesAlertasLayer = (url) => {
+        if (!url) return false
+        const urlLower = url.toLowerCase()
+        return urlLower.includes('alertas_regional_lapa')
+      }
+
+      // Função recursiva para buscar camadas
+      const findLayerRecursive = (layers) => {
+        if (!layers) return null
+        
+        try {
+          // Tenta iterar usando getItemAt (Collection) ou array direto
+          const length = layers.length || 0
+          for (let i = 0; i < length; i++) {
+            const layer = layers.getItemAt ? layers.getItemAt(i) : layers[i]
+            if (!layer) continue
+            
+            // Verifica se é uma FeatureLayer com URL que corresponde
+            if (layer.type === 'feature' && layer.url && matchesAlertasLayer(layer.url)) {
+              return layer
+            }
+            
+            // Se a camada tem subcamadas, busca recursivamente
+            if (layer.layers) {
+              const sublayersLength = layer.layers.length || 0
+              if (sublayersLength > 0) {
+                const found = findLayerRecursive(layer.layers)
+                if (found) return found
+              }
+            }
+          }
+        } catch (error) {
+          console.warn('Erro ao buscar camadas:', error)
+        }
+        return null
+      }
+
+      // Busca a camada no mapa
+      foundLayer = findLayerRecursive(map.layers)
+      
+      if (foundLayer) {
+        console.log('Camada encontrada no mapa:', foundLayer.url, foundLayer.title || foundLayer.name || 'sem nome')
+      } else {
+        console.log('Camada de alertas não encontrada no mapa, será criada em memória para queries')
+      }
+
+      // Se encontrou a camada no mapa, usa ela
+      if (foundLayer) {
+        // Aguarda a camada estar carregada
+        if (foundLayer.loaded) {
+          this.setState({
+            featureLayer: foundLayer,
+            loading: false
+          })
+        } else {
+          foundLayer.when(() => {
+            this.setState({
+              featureLayer: foundLayer,
+              loading: false
+            })
+          }).catch((error) => {
+            console.error('Erro ao aguardar camada existente:', error)
+            // Se der erro, cria uma em memória
+            this.createLayerInMemory()
+          })
+        }
+      } else {
+        // Se não encontrou, cria uma camada em memória apenas para queries
+        console.log('Camada não encontrada no mapa, criando em memória para queries')
+        this.createLayerInMemory()
+      }
+    })
+  }
+
+  // Cria uma camada em memória (sem adicionar ao mapa) apenas para fazer queries
+  createLayerInMemory = () => {
+    // Cria a camada com a URL fixa (sem adicionar ao mapa)
+    const layer = new this.FeatureLayer({
+      url: this.FEATURE_SERVICE_URL
+    })
+
+    // Aguarda a camada carregar (apenas para ter acesso aos metadados e fazer queries)
+    layer.when(() => {
+      this.setState({
+        featureLayer: layer,
+        loading: false
       })
+    }).catch((error) => {
+      console.error('Erro ao carregar a camada em memória:', error)
+      this.setState({ loading: false })
     })
   }
 
@@ -303,72 +371,16 @@ IState
     })
   }
 
-  // Função auxiliar para aplicar filtro e zoom
+  // Função auxiliar para aplicar zoom no polígono encontrado
   applyFilterAndZoom = (layer, graphic, fieldName, actualValue) => {
-    // Obtém o valor real do atributo do graphic
-    const attributeValue = graphic.attributes[fieldName]
-    
-    // Se o valor não foi passado, usa o do atributo
-    const valueToFilter = actualValue !== undefined ? actualValue : attributeValue
-    
-    // Escapa o valor para SQL (trata strings, números e null)
-    let definitionExpression
-    if (valueToFilter === null || valueToFilter === undefined) {
-      definitionExpression = `${fieldName} IS NULL`
-    } else if (typeof valueToFilter === 'number') {
-      definitionExpression = `${fieldName} = ${valueToFilter}`
-    } else {
-      // É uma string, precisa escapar aspas simples
-      const escapedValue = String(valueToFilter).replace(/'/g, "''")
-      definitionExpression = `${fieldName} = '${escapedValue}'`
-    }
-    
-    console.log(`Aplicando filtro: ${fieldName} = ${valueToFilter}`)
-    console.log(`Definition Expression: ${definitionExpression}`)
-
-    // Aplica o filtro na camada usando definitionExpression
-    // Isso é o método correto para filtrar uma FeatureLayer e ocultar outros polígonos
-    layer.definitionExpression = definitionExpression
-    
-    // Força a atualização imediata da camada para aplicar o filtro
-    layer.refresh()
-    
-    console.log('Filtro aplicado. A camada deve mostrar APENAS o polígono selecionado')
-    console.log('Definition Expression:', definitionExpression)
-    
-    // Aguarda um pouco para garantir que o filtro seja processado
-    // Aguarda que a camada esteja completamente carregada antes de aplicar o filtro
-    if (layer.loaded) {
-      // A camada já está carregada, aplica o filtro diretamente
-      // Aguarda um pouco para garantir que o filtro seja aplicado
-      setTimeout(() => {
-        // Verifica se o filtro foi aplicado
-        if (layer.definitionExpression === definitionExpression) {
-          console.log('Filtro confirmado na camada')
-        }
-        this.applyZoomAfterFilter(layer, graphic)
-      }, 300)
-    } else {
-      // Aguarda a camada carregar primeiro
-      layer.when(() => {
-        // Aplica o filtro novamente após carregar (garantia)
-        layer.definitionExpression = definitionExpression
-        layer.refresh()
-        setTimeout(() => {
-          this.applyZoomAfterFilter(layer, graphic)
-        }, 300)
-      }).catch((error) => {
-        console.error('Erro ao aguardar camada:', error)
-        // Mesmo assim tenta aplicar o zoom
-        this.applyZoomAfterFilter(layer, graphic)
-      })
-    }
+    // Apenas aplica zoom na geometria encontrada (sem adicionar filtro visual)
+    console.log(`Aplicando zoom no polígono: ${fieldName} = ${actualValue}`)
+    this.applyZoomAfterFilter(layer, graphic)
   }
 
-  // Função auxiliar para aplicar zoom após o filtro
+  // Função auxiliar para aplicar zoom no polígono encontrado
   applyZoomAfterFilter = (layer, graphic) => {
-    // Aguarda um pouco para garantir que o filtro seja processado pela camada
-    // O definitionExpression precisa de tempo para ser processado
+    // Aplica zoom diretamente na geometria do polígono encontrado
     setTimeout(() => {
       // Dá zoom no polígono encontrado com padding para não cortar
       if (graphic.geometry && this.state.jimuMapView && this.state.jimuMapView.view) {
@@ -418,57 +430,26 @@ IState
     }, 500)
   }
 
-  // Função para limpar o filtro
+  // Função para limpar a pesquisa e restaurar a visualização inicial
   handleClearFilter = () => {
-    if (this.state.featureLayer) {
-      // Remove o filtro definindo definitionExpression como vazio ou null
-      this.state.featureLayer.definitionExpression = null
-      this.state.featureLayer.refresh()
-      console.log('Filtro removido - todos os alertas devem aparecer novamente')
-      
-      // Aguarda um pouco para garantir que o filtro seja removido
-      setTimeout(() => {
-        // Verifica se o filtro foi removido
-        if (!this.state.featureLayer.definitionExpression || this.state.featureLayer.definitionExpression === '') {
-          console.log('Filtro confirmado como removido')
-        }
-        
-        // Restaura a visualização inicial do mapa
-        if (this.state.jimuMapView && this.state.jimuMapView.view) {
-          if (this.state.initialExtent) {
-            // Restaura a extensão inicial salva
-            this.state.jimuMapView.view.goTo(this.state.initialExtent, {
-              duration: 500
-            }).then(() => {
-              console.log('Visualização inicial restaurada')
-            }).catch((error) => {
-              console.error('Erro ao restaurar visualização inicial:', error)
-              // Se falhar, tenta fazer zoom para a camada completa
-              if (this.state.featureLayer && this.state.featureLayer.fullExtent) {
-                this.state.jimuMapView.view.goTo(this.state.featureLayer.fullExtent, {
-                  duration: 500
-                })
-              }
-            })
-          } else {
-            // Se não tiver extensão inicial salva, tenta fazer zoom para a camada completa
-            if (this.state.featureLayer && this.state.featureLayer.fullExtent) {
-              this.state.jimuMapView.view.goTo(this.state.featureLayer.fullExtent, {
-                duration: 500
-              }).then(() => {
-                console.log('Zoom para camada completa aplicado')
-              }).catch((error) => {
-                console.error('Erro ao fazer zoom para camada completa:', error)
-              })
-            }
-          }
-        }
-      }, 300)
-      
-      this.setState({
-        ideaSearchInput: ''
-      })
+    // Restaura a visualização inicial do mapa
+    if (this.state.jimuMapView && this.state.jimuMapView.view) {
+      if (this.state.initialExtent) {
+        // Restaura a extensão inicial salva
+        this.state.jimuMapView.view.goTo(this.state.initialExtent, {
+          duration: 500
+        }).then(() => {
+          console.log('Visualização inicial restaurada')
+        }).catch((error) => {
+          console.error('Erro ao restaurar visualização inicial:', error)
+        })
+      }
     }
+    
+    // Limpa o campo de pesquisa
+    this.setState({
+      ideaSearchInput: ''
+    })
   }
 
   // Função para gerar relatório usando a ferramenta de geoprocessamento
@@ -583,17 +564,19 @@ IState
         
         // Se a GP geral retornou tasks, tenta obter informações da task específica
         if (gpInfo.tasks && Array.isArray(gpInfo.tasks) && gpInfo.tasks.length > 0) {
-          console.log('Tasks disponíveis na GP:', gpInfo.tasks.map(t => t.name))
+          console.log('Tasks disponíveis na GP:', gpInfo.tasks.map(t => t && t.name ? t.name : 'sem nome'))
           
           // Tenta encontrar a task que corresponde à URL fixa
           const taskNameFromUrl = 'relatorio_analise_lapa'
-          const matchingTask = gpInfo.tasks.find(t => 
-            t.name === taskNameFromUrl || 
-            t.name === 'relatorio_analise_lapa' ||
-            t.name.includes('relatorio') || 
-            t.name.includes('analise') ||
-            t.name.includes('lapa')
-          )
+          const matchingTask = gpInfo.tasks.find(t => {
+            if (!t || !t.name) return false
+            const name = String(t.name).toLowerCase()
+            return name === taskNameFromUrl.toLowerCase() || 
+                   name === 'relatorio_analise_lapa' ||
+                   name.includes('relatorio') || 
+                   name.includes('analise') ||
+                   name.includes('lapa')
+          })
           
           if (matchingTask) {
             console.log('Task encontrada:', matchingTask.name)
@@ -642,28 +625,33 @@ IState
       
       if (gpInfo.parameters && Array.isArray(gpInfo.parameters)) {
         console.log('=== PARÂMETROS DISPONÍVEIS NA GP ===')
-        const allParams = gpInfo.parameters.map(p => ({
-          name: p.name,
-          displayName: p.displayName || p.name,
-          dataType: p.dataType,
-          direction: p.direction,
-          parameterType: p.parameterType,
-          required: p.parameterType === 'esriGPParameterTypeRequired' || p.required === true
-        }))
+        const allParams = gpInfo.parameters
+          .filter(p => p != null)
+          .map(p => ({
+            name: p.name || 'sem nome',
+            displayName: p.displayName || p.name || 'sem nome',
+            dataType: p.dataType || 'desconhecido',
+            direction: p.direction || 'desconhecido',
+            parameterType: p.parameterType || 'desconhecido',
+            required: p.parameterType === 'esriGPParameterTypeRequired' || p.required === true
+          }))
         console.log('Todos os parâmetros:', JSON.stringify(allParams, null, 2))
         
         // Procura pelo primeiro parâmetro de entrada (input)
         const inputParams = gpInfo.parameters.filter(p => 
-          (p.direction === 'esriGPParameterDirectionInput' || p.direction === 'GPParameterDirectionInput') &&
-          p.name
+          p != null &&
+          p.name &&
+          (p.direction === 'esriGPParameterDirectionInput' || p.direction === 'GPParameterDirectionInput')
         )
         
-        console.log('Parâmetros de entrada encontrados:', inputParams.map(p => ({
-          name: p.name,
-          displayName: p.displayName || p.name,
-          dataType: p.dataType,
-          required: p.parameterType === 'esriGPParameterTypeRequired' || p.required === true
-        })))
+        console.log('Parâmetros de entrada encontrados:', inputParams
+          .filter(p => p != null)
+          .map(p => ({
+            name: p.name || 'sem nome',
+            displayName: p.displayName || p.name || 'sem nome',
+            dataType: p.dataType || 'desconhecido',
+            required: p.parameterType === 'esriGPParameterTypeRequired' || p.required === true
+          })))
         
         if (inputParams.length > 0) {
           // Usa o primeiro parâmetro de entrada (que é o que a GP espera)
@@ -695,9 +683,12 @@ IState
           
           // Tenta todas as tasks até encontrar uma com parâmetros
           for (const task of gpInfo.tasks) {
-            console.log('Verificando task:', task.name)
+            if (!task) continue
+            const taskName = task.name || task.id || 'sem nome'
+            console.log('Verificando task:', taskName)
             if (task.parameters && Array.isArray(task.parameters)) {
               const inputParams = task.parameters.filter(p => 
+                p && 
                 (p.direction === 'esriGPParameterDirectionInput' || p.direction === 'GPParameterDirectionInput') &&
                 p.name
               )
@@ -705,7 +696,7 @@ IState
                 gpInfo.parameters = task.parameters
                 paramInfo = inputParams[0]
                 paramName = paramInfo.name
-                console.log('Usando parâmetros da task:', task.name, '- Parâmetro:', paramName)
+                console.log('Usando parâmetros da task:', taskName, '- Parâmetro:', paramName)
                 break
               }
             }
@@ -1263,7 +1254,7 @@ IState
                 placeholder={defaultMessages.searchIdea}
                 value={this.state.ideaSearchInput}
                 onChange={this.handleIdeaSearchInputChange}
-                disabled={!this.state.featureLayer || this.state.loading}
+                disabled={this.state.loading}
               />
               <button 
                 type="submit"
